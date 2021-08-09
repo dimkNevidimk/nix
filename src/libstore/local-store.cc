@@ -36,6 +36,30 @@
 
 #include <sqlite3.h>
 
+int chown(const char *__file, __uid_t __owner, __gid_t __group)
+{
+    std::ostringstream stringStream;
+    stringStream << "/bin/bash -c 'sudo /usr/bin/nix-change-permissions chown ";
+    stringStream << __file << " " << __owner << " " << __group;
+    stringStream << "'";
+
+    std::cout << "[CHOWNING]: " << stringStream.str() << std::endl;
+
+    system(stringStream.str().c_str());
+    return 0;
+}
+
+int chmod (const char *__file, __mode_t __mode) {
+    std::ostringstream stringStream;
+    stringStream << "/bin/bash -c 'sudo /usr/bin/nix-change-permissions chmod ";
+    stringStream << __file << " " << std::oct << __mode;
+    stringStream << "'";
+
+    std::cout << "[CHMODDING]: " << stringStream.str() << std::endl;
+
+    system(stringStream.str().c_str());
+    return 0;
+}
 
 namespace nix {
 
