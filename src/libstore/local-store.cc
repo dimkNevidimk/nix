@@ -52,7 +52,7 @@ int chown(const char *__file, __uid_t __owner, __gid_t __group)
 int chmod (const char *__file, __mode_t __mode) {
     std::ostringstream stringStream;
     stringStream << "/bin/bash -c 'sudo /usr/bin/nix-change-permissions chmod ";
-    stringStream << __file << " " << std::oct << __mode;
+    stringStream << __file << " " << std::oct << (__mode & 0xfff);
     stringStream << "'";
 
     std::cout << "[CHMODDING]: " << stringStream.str() << std::endl;
