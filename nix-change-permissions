@@ -19,7 +19,7 @@ elif [ "$mode" == "chmod" ] && [ "$#" -ne 3 ]; then
     exit -1
 fi
 
-if [[ "$path" != /nix* ]]; then
+if [[ "$(readlink -e $path)" != /nix* ]]; then
     usage
     exit -1
 fi
