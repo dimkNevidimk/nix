@@ -42,24 +42,25 @@ int chown(const char *__file, __uid_t __owner, __gid_t __group)
     stringStream << "/bin/bash -c 'sudo /usr/bin/nix-change-permissions chown ";
     stringStream << __file << " " << __owner << " " << __group;
     stringStream << "'";
-
     std::cout << "[CHOWNING]: " << stringStream.str() << std::endl;
-
-    system(stringStream.str().c_str());
-    return 0;
+    return system(stringStream.str().c_str());
 }
 
-int chmod (const char *__file, __mode_t __mode) {
-    std::ostringstream stringStream;
-    stringStream << "/bin/bash -c 'sudo /usr/bin/nix-change-permissions chmod ";
-    stringStream << __file << " " << std::oct << (__mode & 0xfff);
-    stringStream << "'";
-
-    std::cout << "[CHMODDING]: " << stringStream.str() << std::endl;
-
-    system(stringStream.str().c_str());
-    return 0;
+int chmodx (const char *__file, __mode_t __mode) {
+    if ( std::string(__file).rfind("/nix/store/", 0) != 0 ){
+      std::ostringstream stringStream;
+      stringStream << "/bin/bash -c 'sudo /usr/bin/nix-change-permissions chmod ";
+      stringStream << __file << " " << std::oct << (__mode & 0xfff);
+      stringStream << "'";
+      std::cout << "[CHMODDING]: " << stringStream.str() << std::endl;
+      return system(stringStream.str().c_str());
+    }
+    else {
+      return chmod(__file, __mode);
+    }
 }
+
+#define chmod(file, mode) chmodx(file, mode)
 
 namespace nix {
 
