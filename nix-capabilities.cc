@@ -22,9 +22,7 @@ drwxr-xr-x   4 root  root    4096 Jun 30 22:40 var
 d-w--w--wT   4 root  root    4096 Jun 30 22:40 var
 */
 
-#include <filesystem>
 #include <iostream>
-#include <optional>
 #include <string>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -42,7 +40,7 @@ uint32_t getPerm(const std::string &perm) {
 }
 
 std::string getCanonicalizedPath(const char *path) {
-    auto res = realpath(path, NULL);
+    char* res = realpath(path, NULL);
     if (res == NULL) {
         return "";
     }
@@ -63,7 +61,7 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    auto pathToFile = getCanonicalizedPath(argv[2]);
+    std::string pathToFile = getCanonicalizedPath(argv[2]);
     if (pathToFile.length() == 0) {
         std::cerr << "Path " << argv[2] << " doesn't exist" << std::endl;
         return -1;
