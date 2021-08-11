@@ -36,31 +36,33 @@
 
 #include <sqlite3.h>
 
-int chown(const char *__file, __uid_t __owner, __gid_t __group)
-{
+int chownx(const char *__file, __uid_t __owner, __gid_t __group) {
+    char *envVar = std::getenv("NIX_CHANGE_PERM_BIN");
+    std::string changePermissionsScript =
+        envVar == nullptr ? "nix-change-permissions" : std::string{envVar};
     std::ostringstream stringStream;
-    stringStream << "/bin/bash -c 'sudo /usr/bin/nix-change-permissions chown ";
-    stringStream << __file << " " << __owner << " " << __group;
-    stringStream << "'";
-    std::cout << "[CHOWNING]: " << stringStream.str() << std::endl;
+    stringStream << "/bin/bash -c 'sudo " << changePermissionsScript
+                 << " chown " << __file << " " << __owner << " " << __group
+                 << "'";
     return system(stringStream.str().c_str());
 }
 
-int chmodx (const char *__file, __mode_t __mode) {
-    if ( std::string(__file).rfind("/nix/store/", 0) != 0 ){
-      std::ostringstream stringStream;
-      stringStream << "/bin/bash -c 'sudo /usr/bin/nix-change-permissions chmod ";
-      stringStream << __file << " " << std::oct << (__mode & 0xfff);
-      stringStream << "'";
-      std::cout << "[CHMODDING]: " << stringStream.str() << std::endl;
-      return system(stringStream.str().c_str());
+int chmodx(const char *__file, __mode_t __mode) {
+    if (chmod(__file, __mode) == 0) {
+        return 0;
     }
-    else {
-      return chmod(__file, __mode);
-    }
+    char *envVar = std::getenv("NIX_CHANGE_PERM_BIN");
+    std::string changePermissionsScript =
+        envVar == nullptr ? "nix-change-permissions" : std::string{envVar};
+    std::ostringstream stringStream;
+    stringStream << "/bin/bash -c 'sudo " << changePermissionsScript
+                 << " chmod " << __file << " " << std::oct << (__mode & 0xfff)
+                 << "'";
+    return system(stringStream.str().c_str());
 }
 
 #define chmod(file, mode) chmodx(file, mode)
+#define chown(file, owner, group) chownx(file, owner, group)
 
 namespace nix {
 
