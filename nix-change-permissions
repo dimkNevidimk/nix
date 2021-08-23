@@ -1,0 +1,36 @@
+#!/bin/bash
+
+set -e
+
+usage() {
+    >&2 echo "Usage: <chown|chmod> <ABSOLUTE path to file/directory under /nix to change ownership> <uid|perm> [gid]"
+}
+
+mode="$1"
+path="$2"
+perm_uid="$3"
+gid="$4"
+
+if [ "$mode" == "chown" ] && [ "$#" -ne 4 ]; then
+    usage
+    exit -1
+elif [ "$mode" == "chmod" ] && [ "$#" -ne 3 ]; then
+    usage
+    exit -1
+fi
+
+if [[ "$(readlink -e $path)" != /nix* ]]; then
+    usage
+    exit -1
+fi
+
+if [ "$mode" == "chmod" ]; then
+  chmod "$perm_uid" "$path"
+elif [ "$mode" == "chown" ]; then
+  chown -R "$perm_uid":"$gid" "$path"
+else
+  usage
+  exit -1
+fi
+
+## 
