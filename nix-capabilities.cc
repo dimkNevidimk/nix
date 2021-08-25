@@ -36,9 +36,9 @@ void usage() {
 }
 
 uint32_t getPerm(const std::string &perm) {
-    // 0x1ff will drop suid/sgid/sticky-bit/... stuff remaining
-    // only plain-old `user-group-others` permissions
-    return std::stoul(perm, (std::size_t *)0, 8) & 0x1ff;
+    // 0x3ff will drop suid/sgid stuff remaining
+    // only `user-group-others` + sticky-bit permissions
+    return std::stoul(perm, (std::size_t *)0, 8) & 0x3ff;
 }
 
 std::string getCanonicalizedPath(const char *path) {
