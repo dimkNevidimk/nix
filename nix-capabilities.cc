@@ -36,7 +36,9 @@ void usage() {
 }
 
 uint32_t getPerm(const std::string &perm) {
-    return std::stoul(perm, (std::size_t *)0, 8) & 0xfff;
+    // 0x1ff will drop suid/sgid/sticky-bit/... stuff remaining
+    // only plain-old `user-group-others` permissions
+    return std::stoul(perm, (std::size_t *)0, 8) & 0x1ff;
 }
 
 std::string getCanonicalizedPath(const char *path) {
@@ -63,11 +65,11 @@ int main(int argc, char *argv[]) {
 
     std::string pathToFile = getCanonicalizedPath(argv[2]);
     if (pathToFile.length() == 0) {
-        std::cerr << "Path " << argv[2] << " doesn't exist" << std::endl;
+        std::cerr << "Path '" << argv[2] << "' doesn't exist" << std::endl;
         return -1;
     };
     if (pathToFile.rfind("/nix/", 0) != 0) {
-        usage();
+        std::cerr << "Path '" << argv[2] << "' should point to /nix/*";
         return -1;
     }
 
@@ -78,8 +80,13 @@ int main(int argc, char *argv[]) {
             return -1;
         }
         std::string gid{argv[4]};
-        return chown(pathToFile.c_str(), std::stoul(uidOrPerm),
-                     std::stoul(gid));
+        uint32_t u_uid = std::stoul(uidOrPerm);
+        uint32_t u_gid = std::stoul(gid);
+        if (u_uid == 0 || u_gid == 0) {
+            std::cerr << "You cannot change owner or group to root user" << std::endl;
+            return -1;
+        }
+        return chown(pathToFile.c_str(), u_uid, u_gid);
     } else if (mode == "chmod") {
         if (argc != 4) {
             usage();
