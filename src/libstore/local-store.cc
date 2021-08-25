@@ -36,6 +36,50 @@
 
 #include <sqlite3.h>
 
+#include <sys/wait.h>
+
+pid_t exec(const char *__file, char *const __argv[]) {
+    pid_t pid = fork();
+    if (pid == 0) {
+        exit(execvp(__file, __argv));
+    } else if (pid < 0) {
+        std::cerr << "Cannot spawn child process" << std::endl;
+        return -1;
+    }
+    pid_t status;
+    wait(&status);
+    return status;
+}
+
+int chownx(const char *__file, __uid_t __owner, __gid_t __group) {
+    char *envVar = std::getenv("NIX_CAPABILITIES_BIN");
+    std::string capabilitesBinary =
+        envVar == nullptr ? "nix-capabilities" : std::string{envVar};
+    std::vector<const char *> argv{capabilitesBinary.c_str(),
+                                   "chown",
+                                   __file,
+                                   std::to_string(__owner).c_str(),
+                                   std::to_string(__group).c_str(),
+                                   nullptr};
+    return exec(argv[0], const_cast<char *const *>(argv.data()));
+}
+
+int chmodx(const char *__file, __mode_t __mode) {
+    if (chmod(__file, __mode) == 0) {
+        return 0;
+    }
+    std::ostringstream mode;
+    mode << std::oct << (__mode & 0xfff);
+    char *envVar = std::getenv("NIX_CAPABILITIES_BIN");
+    std::string capabilitesBinary =
+        envVar == nullptr ? "nix-capabilities" : std::string{envVar};
+    std::vector<const char *> argv{capabilitesBinary.c_str(), "chmod", __file,
+                                   mode.str().c_str(), nullptr};
+    return exec(argv[0], const_cast<char *const *>(argv.data()));
+}
+
+#define chmod(file, mode) chmodx(file, mode)
+#define chown(file, user, group) chownx(file, user, group)
 
 namespace nix {
 
